@@ -88,6 +88,100 @@ This approach leverages MoveIt!’s inverse kinematics and planning capabilities
 
 ### Task 2 : _Use TF (ROS package) to compute what a given base frame pose would be in the camera frame. Then move the fetch arm to that pose in the camera frame._
 
+The primary task addressed here is : Given a target pose (x, y, z, roll, pitch, yaw) in the base frame (interpreted as ```odom``` for this task), compute its equivalent pose in the camera frame (```head_camera_rgb_optical_frame```) using TF, 
+and then move the Fetch robot arm to that transformed pose in the Gazebo simulation environment.
+
+### Solution
+The solution uses ROS Melodic, Gazebo, and MoveIt! to control the Fetch robot arm. A Python node (`task2_moveit.py`) is implemented to:
+1. Initialize a ROS node, MoveIt! commander, and TF listener.
+2. Define a target pose in the ```odom``` frame (base frame for Task 2).
+3. Transform the pose to the ```head_camera_rgb_optical_frame``` using TF.
+4. Plan and execute a trajectory with MoveIt! to move the arm to the transformed pose.
+
+
+#### Dependencies
+- ROS Melodic
+- `fetch_gazebo` (for simulation)
+- `fetch_moveit_config` (for MoveIt! integration)
+- Python packages: `rospy, moveit_commander, geometry_msgs, tf, tf.transformations`
+
+#### How to Run
+1. **Set up the workspace**:
+   ```
+   cd ~/catkin_ws/src
+   catkin_create_pkg test_fetch_control roscpp rospy std_msgs geometry_msgs moveit_commander
+   cd ~/catkin_ws
+   catkin_make
+   source devel/setup.bash
+   ```
+2. **Launch Gazebo**:
+   ```
+   roslaunch fetch_gazebo simulation.launch
+   ```
+3. **Launch MoveIt!**:
+   ```
+   roslaunch fetch_moveit_config move_group.launch
+   ```
+4. **Run the Node**:
+   ```
+   rosrun test_fetch_control task2_moveit.py
+   ```
+   or
+   ```
+   rosrun test_fetch_control task1_moveit.py --x 0.5 --y 0.4 --z 0.6 --roll 0.0 --pitch 0.0 --yaw 0.785
+   ```
+
+### Results for Task 2
+
+The Fetch arm moves to the transformed pose in the `camera frame`, derived from the input pose in `odom` (e.g., x=0.5, y=0.5, z=0.5, roll=0.0, pitch=0.0, yaw=0.0), as computed by TF and executed in the Gazebo simulation.
+
+![task2_fetch](https://github.com/user-attachments/assets/ab909f18-c4bf-4d5a-ac6f-da6ce64076a4)
+
+
+#### Code Explanation
+- **Task:** Compute a given pose in the base frame (odom) in the camera frame (head_camera_rgb_optical_frame) using TF, then move the Fetch arm to that pose.
+- **Solution:** Created task2_moveit.py in the test_fetch_control package using MoveIt! and TF.
+- **Implementation:** Set odom as the input base frame and head_camera_rgb_optical_frame as the target frame.
+- Parsed pose inputs via command-line arguments (defaults: 0.5, 0.5, 0.5, 0.0, 0.0, 0.0).
+- Used TF’s transformPose to convert the odom pose to the camera frame, logging both poses with Euler angles.
+- Configured MoveIt! with the camera frame as the reference and used the RRTConnect planner to move the arm.
+- **Execution:** The script transforms the pose and executes the arm movement in Gazebo, reflecting the robot’s position in odom.
+- **Result:** Successfully moved the arm to the transformed pose, verified through Gazebo and logged output.
+
+For help
+```
+rosrun test_fetch_control task2_moveit.py --help
+```
+Will give following output: 
+```
+usage: task2_moveit.py [-h] [--x X] [--y Y] [--z Z] [--roll ROLL]
+                       [--pitch PITCH] [--yaw YAW]
+
+Move Fetch arm to a pose in odom frame, transformed to camera frame
+
+optional arguments:
+  -h, --help     show this help message and exit
+  --x X          X position in meters
+  --y Y          Y position in meters
+  --z Z          Z position in meters
+  --roll ROLL    Roll angle in radians
+  --pitch PITCH  Pitch angle in radians
+  --yaw YAW      Yaw angle in radians
+```
+
+Hence, to solve Task 2—computing a given base frame pose in the camera frame and moving the Fetch arm there—we developed a Python script (task2_moveit.py) within the test_fetch_control ROS package, utilizing TF for transformation and MoveIt! for motion control. 
+
+The script initializes a ROS node, MoveIt!, and a TF listener, interpreting the base frame as odom (a world-like frame) and the target as head_camera_rgb_optical_frame. 
+
+It accepts a pose via command-line arguments (defaults: x=0.5, y=0.5, z=0.5, roll=0.0, pitch=0.0, yaw=0.0), transforms it using TF, and uses MoveIt!’s RRTConnect planner to execute the arm movement in the camera frame within Gazebo. 
+
+This approach ensures the arm reaches the exact transformed pose, verified through simulation and logged feedback.
+
+---
+
+
+
+
 
 
 
