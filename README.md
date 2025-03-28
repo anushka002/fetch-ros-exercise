@@ -41,6 +41,10 @@ The solution uses ROS Melodic, Gazebo, and MoveIt! to control the Fetch robot ar
    ```
    rosrun test_fetch_control task1_moveit.py --x 0.3 --y 0.1 --z 0.6 --roll 0.0 --pitch 0.0 --yaw 0.785
    ```
+5. We can cross verify by moving the robot and trying to reach same pose
+   ```
+   rostopic pub /cmd_vel geometry_msgs/Twist '{linear: {x: 0.2, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}' -r 10
+   ```
 
 ### Results for Task 1
 
@@ -179,11 +183,16 @@ This approach ensures the arm reaches the exact transformed pose, verified throu
 
 ---
 
+### Task 3 : _Detect the pose of an AR marker from the camera and move the fetch arm to that pose_
 
+The primary task addressed here is : 
 
-
-
-
+### Solution
+The solution uses ROS Melodic, Gazebo, and MoveIt! to control the Fetch robot arm. A Python node (`task2_moveit.py`) is implemented to:
+1. Initialize a ROS node, MoveIt! commander, and TF listener.
+2. Define a target pose in the ```odom``` frame (base frame for Task 2).
+3. Transform the pose to the ```head_camera_rgb_optical_frame``` using TF.
+4. Plan and execute a trajectory with MoveIt! to move the arm to the transformed pose.
 
 
 
