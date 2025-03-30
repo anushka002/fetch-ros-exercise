@@ -185,14 +185,82 @@ This approach ensures the arm reaches the exact transformed pose, verified throu
 
 ### Task 3 : _Detect the pose of an AR marker from the camera and move the fetch arm to that pose_
 
-The primary task addressed here is : 
+The primary task addressed here is : Detect the pose of a custom ArUco marker using the Fetch robot’s head camera in a Gazebo simulation, 
+and then move the Fetch arm to the detected marker’s pose in the camera frame (`head_camera_rgb_optical_frame`). 
+The solution uses `ar_track_alvar` for marker detection and MoveIt! for arm control.
 
 ### Solution
-The solution uses ROS Melodic, Gazebo, and MoveIt! to control the Fetch robot arm. A Python node (`task2_moveit.py`) is implemented to:
-1. Initialize a ROS node, MoveIt! commander, and TF listener.
-2. Define a target pose in the ```odom``` frame (base frame for Task 2).
-3. Transform the pose to the ```head_camera_rgb_optical_frame``` using TF.
-4. Plan and execute a trajectory with MoveIt! to move the arm to the transformed pose.
+
+The solution uses ROS Melodic, Gazebo, `ar_track_alvar`, and MoveIt! to achieve the task. It consists of two components:
+1. A launch file (`aruco_detect.launch`) to detect the ArUco marker using `ar_track_alvar` and publish its pose on topic `/ar_pose_marker`.
+2. A Python node (`task3_moveit.py`) to subscribe to the marker’s pose and move the Fetch arm to that pose using MoveIt!.
 
 
+#### Dependencies
+- ROS Melodic
+- `fetch_gazebo` (for simulation)
+- `fetch_moveit_config` (for MoveIt! integration)
+- `ros-melodic-ar-track-alvar` (for ArUco marker detection)
+- `fetch_msgs` (for Fetch robot compatibility)
+- Python packages: `rospy, moveit_commander, geometry_msgs`
+
+#### How to Run
+1. **Set up the workspace**:
+   ```
+   cd ~/catkin_ws/src  
+   catkin_create_pkg test_fetch_control roscpp rospy std_msgs geometry_msgs moveit_commander ar_track_alvar
+   cd ~/catkin_ws
+   catkin_make
+   source devel/setup.bash
+   ```
+
+3. **Generate the Custom ArUco Marker**:
+   ```
+   cd ~/catkin_ws/src/test_fetch_control  
+   mkdir -p markers  
+   cd markers`  
+   rosrun ar_track_alvar createMarker 0
+   ```  
+   This generates `MarkerData_0.png`. Print it with the black square measuring 4.4 cm x 4.4 cm (as specified in the launch file).
+   **Note:** I used pre-existing Marker from a github repository added into Gazebo Models. So, I added the Marker manually in the Gazebo Environment. (Marker 0)
+
+4. **Launch Gazebo**:
+   
+   ```
+   roslaunch fetch_gazebo simulation.launch
+   ```
+
+5. **Launch MoveIt!**:
+   
+   ```
+   roslaunch fetch_moveit_config move_group.launch
+   ```
+
+6. **Run the Detection Node**:
+   
+   ```
+   roslaunch test_fetch_control aruco_detect.launch
+   ```
+
+7. **Run the Arm Movement Node**:
+      ```
+      rosrun test_fetch_control task3_moveit.py
+      ```
+
+#### Results for Task 3
+
+The `ar_track_alvar` node detects the custom ArUco marker (ID 1) using the Fetch robot’s head camera in the Gazebo simulation, publishing its pose on `/ar_pose_marker`. 
+The `task3_moveit.py` node subscribes to this pose and moves the Fetch arm to the marker’s position in the `head_camera_rgb_optical_frame`, verified through Gazebo simulation.
+
+![task3](https://github.com/user-attachments/assets/7fe9f968-504e-42e9-839d-127f21a890f4)
+
+#### Code Explanation
+- **Task:** Detect the pose of an ArUco marker using the Fetch robot’s head camera and move the arm to that pose.
+- **Solution:** Created `aruco_detect.launch` to run `ar_track_alvar` for marker detection, and `task3_moveit.py` to move the arm using MoveIt!.
+- **Implementation:** Generated a marker with ID 1 using `rosrun ar_track_alvar createMarker 1`, which uses the `DICT_6X6_250` dictionary (default for `ar_track_alvar`).  
+- Configured `aruco_detect.launch` to use the Fetch robot’s head camera topics (`/head_camera/rgb/image_raw` and `/head_camera/rgb/camera_info`) and set the marker size to 4.4 cm.  
+- Set the output frame to `/base_link`.  
+- The `task3_moveit.py` script subscribes to `/ar_pose_marker`, extracts the marker’s pose, and uses MoveIt! with the RRTConnect planner to move the arm to the detected pose in the camera frame.
+- **Execution:** The launch file runs the `individualMarkers` node from `ar_track_alvar`, which detects the marker and publishes its pose. The Python node processes this pose and executes the arm movement in Gazebo.
+- **Result:** Successfully detected the marker and moved the arm to its pose, verified through Gazebo simulation and logged output.
 
